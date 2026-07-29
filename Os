@@ -1,0 +1,1391 @@
+local Win95UI = {
+    Version = "1.0.0",
+    Windows = {},
+    Theme = {}
+}
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+Win95UI.Theme = {
+    WindowBg = Color3.fromRGB(192, 192, 192),
+    TitleBar = Color3.fromRGB(0, 0, 128),
+    TitleBarActive = Color3.fromRGB(0, 0, 128),
+    TitleText = Color3.fromRGB(255, 255, 255),
+    ButtonFace = Color3.fromRGB(192, 192, 192),
+    ButtonHighlight = Color3.fromRGB(255, 255, 255),
+    ButtonShadow = Color3.fromRGB(128, 128, 128),
+    ButtonText = Color3.fromRGB(0, 0, 0),
+    ButtonActive = Color3.fromRGB(0, 0, 160),
+    PanelBg = Color3.fromRGB(192, 192, 192),
+    InputBg = Color3.fromRGB(255, 255, 255),
+    InputText = Color3.fromRGB(0, 0, 0),
+    GroupBoxBg = Color3.fromRGB(192, 192, 192),
+    GroupBoxText = Color3.fromRGB(0, 0, 0),
+    LogBg = Color3.fromRGB(255, 255, 255),
+    LogText = Color3.fromRGB(0, 0, 0),
+    StatusBarBg = Color3.fromRGB(192, 192, 192),
+    StatusBarText = Color3.fromRGB(0, 0, 0),
+    Accent = Color3.fromRGB(0, 0, 128),
+    Success = Color3.fromRGB(0, 128, 0),
+    Error = Color3.fromRGB(128, 0, 0),
+    Warning = Color3.fromRGB(128, 128, 0),
+    Font = Enum.Font.Gotham,
+    FontBold = Enum.Font.GothamBold,
+    FontMedium = Enum.Font.GothamMedium,
+    CodeFont = Enum.Font.Code,
+}
+
+function Win95UI:Notify(title, text, duration)
+    duration = duration or 4
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title or "Win95UI",
+            Duration = duration,
+            Text = text or ""
+        })
+    end)
+end
+
+
+function Win95UI:Add3DBorder(parent, inset)
+    inset = inset or false
+    local tl = inset and Win95UI.Theme.ButtonShadow or Win95UI.Theme.ButtonHighlight
+    local br = inset and Win95UI.Theme.ButtonHighlight or Win95UI.Theme.ButtonShadow
+
+    local top = Instance.new("Frame")
+    top.Name = "BorderTop"
+    top.Size = UDim2.new(1, 0, 0, 1)
+    top.Position = UDim2.new(0, 0, 0, 0)
+    top.BackgroundColor3 = tl
+    top.BorderSizePixel = 0
+    top.ZIndex = parent.ZIndex + 1
+    top.Parent = parent
+
+    local left = Instance.new("Frame")
+    left.Name = "BorderLeft"
+    left.Size = UDim2.new(0, 1, 1, -2)
+    left.Position = UDim2.new(0, 0, 0, 1)
+    left.BackgroundColor3 = tl
+    left.BorderSizePixel = 0
+    left.ZIndex = parent.ZIndex + 1
+    left.Parent = parent
+
+    local right = Instance.new("Frame")
+    right.Name = "BorderRight"
+    right.Size = UDim2.new(0, 1, 1, -2)
+    right.Position = UDim2.new(1, -1, 0, 1)
+    right.BackgroundColor3 = br
+    right.BorderSizePixel = 0
+    right.ZIndex = parent.ZIndex + 1
+    right.Parent = parent
+
+    local bottom = Instance.new("Frame")
+    bottom.Name = "BorderBottom"
+    bottom.Size = UDim2.new(1, 0, 0, 1)
+    bottom.Position = UDim2.new(0, 0, 1, -1)
+    bottom.BackgroundColor3 = br
+    bottom.BorderSizePixel = 0
+    bottom.ZIndex = parent.ZIndex + 1
+    bottom.Parent = parent
+end
+
+function Win95UI:CreateClassicButton(config)
+    config = config or {}
+    local parent = config.Parent
+    local text = config.Text or "Button"
+    local size = config.Size or UDim2.new(1, -10, 0, 26)
+    local pos = config.Position or UDim2.new(0, 5, 0, 0)
+    local accent = config.Accent or false
+    local zIndex = config.ZIndex or 1
+
+    local btn = Instance.new("TextButton")
+    btn.Name = text
+    btn.Size = size
+    btn.Position = pos
+    btn.BackgroundColor3 = accent and Win95UI.Theme.Accent or Win95UI.Theme.ButtonFace
+    btn.Text = text
+    btn.TextColor3 = accent and Color3.fromRGB(255,255,255) or Win95UI.Theme.ButtonText
+    btn.TextSize = 12
+    btn.Font = Win95UI.Theme.FontMedium
+    btn.AutoButtonColor = false
+    btn.ZIndex = zIndex
+    btn.BorderSizePixel = 0
+    if parent then btn.Parent = parent end
+
+    self:Add3DBorder(btn, false)
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {
+            BackgroundColor3 = accent and Color3.fromRGB(0,0,160) or Color3.fromRGB(200,200,200)
+        }):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {
+            BackgroundColor3 = accent and Win95UI.Theme.Accent or Win95UI.Theme.ButtonFace
+        }):Play()
+    end)
+
+    local function swapBorders()
+        for _, child in ipairs(btn:GetChildren()) do
+            if child:IsA("Frame") and child.Name:find("Border") then
+                local current = child.BackgroundColor3
+                if current == Win95UI.Theme.ButtonHighlight then
+                    child.BackgroundColor3 = Win95UI.Theme.ButtonShadow
+                elseif current == Win95UI.Theme.ButtonShadow then
+                    child.BackgroundColor3 = Win95UI.Theme.ButtonHighlight
+                end
+            end
+        end
+    end
+
+    btn.MouseButton1Down:Connect(swapBorders)
+    btn.MouseButton1Up:Connect(swapBorders)
+
+    return btn
+end
+
+function Win95UI:MakeDraggable(frame, handle)
+    handle = handle or frame
+    local dragging, dragInput, dragStart, startPos
+
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+
+
+function Win95UI:CreateWindow(config)
+    config = config or {}
+    local title = config.Title or "Window"
+    local size = config.Size or UDim2.new(0, 500, 0, 350)
+    local pos = config.Position or UDim2.new(0.5, -250, 0.5, -175)
+    local showStatusBar = config.StatusBar ~= false
+    local statusText = config.StatusText or "Ready"
+    local icon = config.Icon or "?"
+    local canMinimize = config.CanMinimize ~= false
+    local canClose = config.CanClose ~= false
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "Win95UI_" .. title:gsub("%s+", "_")
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    pcall(function()
+        ScreenGui.Parent = game:GetService("CoreGui")
+    end)
+    if not ScreenGui.Parent then
+        ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    end
+
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Size = size
+    Main.Position = pos
+    Main.BackgroundColor3 = Win95UI.Theme.WindowBg
+    Main.BorderSizePixel = 0
+    Main.Active = true
+    Main.ClipsDescendants = true
+    Main.Parent = ScreenGui
+    self:Add3DBorder(Main, true)
+
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Name = "TitleBar"
+    TitleBar.Size = UDim2.new(1, -4, 0, 26)
+    TitleBar.Position = UDim2.new(0, 2, 0, 2)
+    TitleBar.BackgroundColor3 = Win95UI.Theme.TitleBar
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Active = true
+    TitleBar.Parent = Main
+
+    local TitleIcon = Instance.new("TextLabel", TitleBar)
+    TitleIcon.Name = "TitleIcon"
+    TitleIcon.Size = UDim2.new(0, 18, 0, 18)
+    TitleIcon.Position = UDim2.new(0, 4, 0, 4)
+    TitleIcon.BackgroundTransparency = 1
+    TitleIcon.Text = icon
+    TitleIcon.TextColor3 = Color3.fromRGB(255,255,255)
+    TitleIcon.TextSize = 12
+    TitleIcon.Font = Win95UI.Theme.FontBold
+
+    local TitleLabel = Instance.new("TextLabel", TitleBar)
+    TitleLabel.Name = "TitleLabel"
+    TitleLabel.Size = UDim2.new(1, -100, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 24, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = title
+    TitleLabel.TextColor3 = Win95UI.Theme.TitleText
+    TitleLabel.TextSize = 12
+    TitleLabel.Font = Win95UI.Theme.FontBold
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local CloseBtn
+    if canClose then
+        CloseBtn = Instance.new("TextButton", TitleBar)
+        CloseBtn.Name = "CloseBtn"
+        CloseBtn.Size = UDim2.new(0, 20, 0, 18)
+        CloseBtn.Position = UDim2.new(1, -24, 0, 4)
+        CloseBtn.BackgroundColor3 = Win95UI.Theme.ButtonFace
+        CloseBtn.Text = "X"
+        CloseBtn.TextColor3 = Win95UI.Theme.ButtonText
+        CloseBtn.TextSize = 12
+        CloseBtn.Font = Win95UI.Theme.FontBold
+        CloseBtn.AutoButtonColor = false
+        self:Add3DBorder(CloseBtn, false)
+    end
+
+    local MinBtn
+    if canMinimize then
+        MinBtn = Instance.new("TextButton", TitleBar)
+        MinBtn.Name = "MinBtn"
+        MinBtn.Size = UDim2.new(0, 20, 0, 18)
+        MinBtn.Position = canClose and UDim2.new(1, -48, 0, 4) or UDim2.new(1, -24, 0, 4)
+        MinBtn.BackgroundColor3 = Win95UI.Theme.ButtonFace
+        MinBtn.Text = "_"
+        MinBtn.TextColor3 = Win95UI.Theme.ButtonText
+        MinBtn.TextSize = 12
+        MinBtn.Font = Win95UI.Theme.FontBold
+        MinBtn.AutoButtonColor = false
+        self:Add3DBorder(MinBtn, false)
+    end
+
+    local Content = Instance.new("Frame")
+    Content.Name = "Content"
+    local statusOffset = showStatusBar and 56 or 34
+    Content.Size = UDim2.new(1, -8, 1, -statusOffset)
+    Content.Position = UDim2.new(0, 4, 0, 30)
+    Content.BackgroundTransparency = 1
+    Content.Parent = Main
+
+    local StatusBar, StatusTextLabel
+    if showStatusBar then
+        StatusBar = Instance.new("Frame")
+        StatusBar.Name = "StatusBar"
+        StatusBar.Size = UDim2.new(1, -8, 0, 20)
+        StatusBar.Position = UDim2.new(0, 4, 1, -22)
+        StatusBar.BackgroundColor3 = Win95UI.Theme.StatusBarBg
+        StatusBar.BorderSizePixel = 0
+        StatusBar.Parent = Main
+        self:Add3DBorder(StatusBar, true)
+
+        StatusTextLabel = Instance.new("TextLabel", StatusBar)
+        StatusTextLabel.Name = "StatusText"
+        StatusTextLabel.Size = UDim2.new(1, -8, 1, 0)
+        StatusTextLabel.Position = UDim2.new(0, 4, 0, 0)
+        StatusTextLabel.BackgroundTransparency = 1
+        StatusTextLabel.Text = statusText
+        StatusTextLabel.TextColor3 = Win95UI.Theme.StatusBarText
+        StatusTextLabel.TextSize = 11
+        StatusTextLabel.Font = Win95UI.Theme.Font
+        StatusTextLabel.TextXAlignment = Enum.TextXAlignment.Left
+    end
+
+    self:MakeDraggable(Main, TitleBar)
+
+    if CloseBtn then
+        CloseBtn.MouseButton1Click:Connect(function()
+            ScreenGui:Destroy()
+        end)
+    end
+
+    if MinBtn then
+        MinBtn.MouseButton1Click:Connect(function()
+            Main.Visible = false
+            self:Notify(title, "Press Left Alt to restore window", 3)
+        end)
+    end
+
+    local altConnection
+    altConnection = UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and input.KeyCode == Enum.KeyCode.LeftAlt then
+            if Main and Main.Parent then
+                Main.Visible = not Main.Visible
+            else
+                altConnection:Disconnect()
+            end
+        end
+    end)
+
+    local Window = {
+        ScreenGui = ScreenGui,
+        Main = Main,
+        TitleBar = TitleBar,
+        Content = Content,
+        StatusBar = StatusBar,
+        StatusText = StatusTextLabel,
+        Elements = {},
+        ElementCount = 0
+    }
+
+    function Window:SetStatus(text)
+        if self.StatusText then
+            self.StatusText.Text = text
+        end
+    end
+
+    function Window:SetTitle(text)
+        TitleLabel.Text = text
+    end
+
+    function Window:SetVisible(visible)
+        self.Main.Visible = visible
+    end
+
+    function Window:Destroy()
+        self.ScreenGui:Destroy()
+    end
+
+    table.insert(Win95UI.Windows, Window)
+    return Window
+end
+
+
+
+function Win95UI:AddSection(window, config)
+    config = config or {}
+    local parent = config.Parent or window.Content
+    local title = config.Title or ""
+    local size = config.Size or UDim2.new(1, -8, 0, 120)
+    local pos = config.Position or UDim2.new(0, 4, 0, 0)
+    local zIndex = config.ZIndex or 1
+
+    local group = Instance.new("Frame")
+    group.Name = title ~= "" and (title .. "_Group") or "Group"
+    group.Size = size
+    group.Position = pos
+    group.BackgroundColor3 = Win95UI.Theme.GroupBoxBg
+    group.BorderSizePixel = 0
+    group.ZIndex = zIndex
+    group.Parent = parent
+    self:Add3DBorder(group, true)
+
+    if title ~= "" then
+        local label = Instance.new("TextLabel", group)
+        label.Name = "GroupLabel"
+        label.Size = UDim2.new(0, title:len() * 7 + 10, 0, 14)
+        label.Position = UDim2.new(0, 6, 0, 2)
+        label.BackgroundColor3 = Win95UI.Theme.GroupBoxBg
+        label.Text = " " .. title .. " "
+        label.TextColor3 = Win95UI.Theme.GroupBoxText
+        label.TextSize = 10
+        label.Font = Win95UI.Theme.FontBold
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = zIndex + 1
+    end
+
+    local container = Instance.new("Frame")
+    container.Name = "Container"
+    container.Size = UDim2.new(1, -8, 1, -16)
+    container.Position = UDim2.new(0, 4, 0, 14)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+    container.Parent = group
+
+    local Section = {
+        Frame = group,
+        Container = container,
+        Elements = {},
+        ElementCount = 0,
+        YOffset = 4
+    }
+
+    function Section:AddElement(elementFrame, height)
+        height = height or 28
+        elementFrame.Position = UDim2.new(0, 4, 0, self.YOffset)
+        elementFrame.Parent = self.Container
+        self.YOffset = self.YOffset + height + 4
+        table.insert(self.Elements, elementFrame)
+        return elementFrame
+    end
+
+    table.insert(window.Elements, Section)
+    return Section
+end
+
+function Win95UI:AddButton(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Button"
+    local callback = config.Callback or function() end
+    local accent = config.Accent or false
+    local size = config.Size or UDim2.new(1, -8, 0, 26)
+    local zIndex = config.ZIndex or 1
+
+    local btn = self:CreateClassicButton({
+        Text = text,
+        Size = size,
+        Accent = accent,
+        ZIndex = zIndex
+    })
+
+    btn.MouseButton1Click:Connect(function()
+        local ok, err = pcall(callback)
+        if not ok then
+            warn("[Win95UI Button Error] " .. tostring(err))
+        end
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(btn, 26)
+    end
+
+    local Element = {
+        Frame = btn,
+        Type = "Button",
+        SetText = function(self, newText)
+            btn.Text = newText
+        end,
+        SetCallback = function(self, newCallback)
+            callback = newCallback
+        end,
+        Click = function(self)
+            btn.MouseButton1Click:Fire()
+        end
+    }
+
+    return Element
+end
+
+function Win95UI:AddToggle(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Toggle"
+    local default = config.Default or false
+    local callback = config.Callback or function() end
+    local zIndex = config.ZIndex or 1
+
+    local container = Instance.new("Frame")
+    container.Name = text .. "_Toggle"
+    container.Size = UDim2.new(1, -8, 0, 22)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+
+    local box = Instance.new("Frame", container)
+    box.Name = "Checkbox"
+    box.Size = UDim2.new(0, 14, 0, 14)
+    box.Position = UDim2.new(0, 2, 0.5, -7)
+    box.BackgroundColor3 = Win95UI.Theme.InputBg
+    box.BorderSizePixel = 0
+    box.ZIndex = zIndex + 1
+    self:Add3DBorder(box, true)
+
+    local check = Instance.new("TextLabel", box)
+    check.Name = "Checkmark"
+    check.Size = UDim2.new(1, 0, 1, 0)
+    check.BackgroundTransparency = 1
+    check.Text = "x"
+    check.TextColor3 = Color3.fromRGB(0,0,0)
+    check.TextSize = 12
+    check.Font = Win95UI.Theme.FontBold
+    check.ZIndex = zIndex + 2
+    check.Visible = default
+
+    local label = Instance.new("TextLabel", container)
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -24, 1, 0)
+    label.Position = UDim2.new(0, 22, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Win95UI.Theme.ButtonText
+    label.TextSize = 12
+    label.Font = Win95UI.Theme.Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = zIndex + 1
+
+    local state = default
+
+    local function update()
+        check.Visible = state
+        local ok, err = pcall(function() callback(state) end)
+        if not ok then warn("[Win95UI Toggle Error] " .. tostring(err)) end
+    end
+
+    container.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            state = not state
+            update()
+        end
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(container, 22)
+    end
+
+    local Element = {
+        Frame = container,
+        Type = "Toggle",
+        GetState = function() return state end,
+        SetState = function(self, newState)
+            state = newState
+            update()
+        end,
+        SetText = function(self, newText)
+            label.Text = newText
+        end
+    }
+
+    return Element
+end
+
+function Win95UI:AddSlider(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Slider"
+    local min = config.Min or 0
+    local max = config.Max or 100
+    local default = config.Default or min
+    local increment = config.Increment or 1
+    local callback = config.Callback or function() end
+    local suffix = config.Suffix or ""
+    local zIndex = config.ZIndex or 1
+
+    local container = Instance.new("Frame")
+    container.Name = text .. "_Slider"
+    container.Size = UDim2.new(1, -8, 0, 40)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+
+    local label = Instance.new("TextLabel", container)
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -60, 0, 14)
+    label.Position = UDim2.new(0, 2, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Win95UI.Theme.ButtonText
+    label.TextSize = 11
+    label.Font = Win95UI.Theme.Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = zIndex + 1
+
+    local valueLabel = Instance.new("TextLabel", container)
+    valueLabel.Name = "ValueLabel"
+    valueLabel.Size = UDim2.new(0, 55, 0, 14)
+    valueLabel.Position = UDim2.new(1, -57, 0, 0)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Text = tostring(default) .. suffix
+    valueLabel.TextColor3 = Win95UI.Theme.ButtonText
+    valueLabel.TextSize = 11
+    valueLabel.Font = Win95UI.Theme.Font
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.ZIndex = zIndex + 1
+
+    local track = Instance.new("Frame", container)
+    track.Name = "Track"
+    track.Size = UDim2.new(1, -8, 0, 14)
+    track.Position = UDim2.new(0, 4, 0, 20)
+    track.BackgroundColor3 = Win95UI.Theme.InputBg
+    track.BorderSizePixel = 0
+    track.ZIndex = zIndex + 1
+    self:Add3DBorder(track, true)
+
+    local fill = Instance.new("Frame", track)
+    fill.Name = "Fill"
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.BackgroundColor3 = Win95UI.Theme.Accent
+    fill.BorderSizePixel = 0
+    fill.ZIndex = zIndex + 2
+
+    local knob = Instance.new("Frame", track)
+    knob.Name = "Knob"
+    knob.Size = UDim2.new(0, 8, 1, 4)
+    knob.Position = UDim2.new(0, -4, 0, -2)
+    knob.BackgroundColor3 = Win95UI.Theme.ButtonFace
+    knob.BorderSizePixel = 0
+    knob.ZIndex = zIndex + 3
+    self:Add3DBorder(knob, false)
+
+    local value = math.clamp(default, min, max)
+
+    local function setValue(newVal)
+        newVal = math.clamp(newVal, min, max)
+        if increment > 0 then
+            newVal = math.floor((newVal - min) / increment + 0.5) * increment + min
+        end
+        value = newVal
+        local percent = (value - min) / (max - min)
+        fill.Size = UDim2.new(percent, 0, 1, 0)
+        knob.Position = UDim2.new(percent, -4, 0, -2)
+        valueLabel.Text = tostring(value) .. suffix
+        local ok, err = pcall(function() callback(value) end)
+        if not ok then warn("[Win95UI Slider Error] " .. tostring(err)) end
+    end
+
+    setValue(value)
+
+    local dragging = false
+    track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            local absPos = track.AbsolutePosition.X
+            local absSize = track.AbsoluteSize.X
+            local relX = math.clamp((input.Position.X - absPos) / absSize, 0, 1)
+            setValue(min + relX * (max - min))
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local absPos = track.AbsolutePosition.X
+            local absSize = track.AbsoluteSize.X
+            local relX = math.clamp((input.Position.X - absPos) / absSize, 0, 1)
+            setValue(min + relX * (max - min))
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(container, 40)
+    end
+
+    local Element = {
+        Frame = container,
+        Type = "Slider",
+        GetValue = function() return value end,
+        SetValue = function(self, newVal)
+            setValue(newVal)
+        end,
+        SetText = function(self, newText)
+            label.Text = newText
+        end
+    }
+
+    return Element
+end
+
+
+function Win95UI:AddTextBox(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or ""
+    local placeholder = config.Placeholder or "Enter text..."
+    local callback = config.Callback or function() end
+    local multiline = config.Multiline or false
+    local clearOnFocus = config.ClearOnFocus or false
+    local zIndex = config.ZIndex or 1
+    local height = config.Height or (multiline and 80 or 28)
+
+    local container = Instance.new("Frame")
+    container.Name = (config.Name or "TextBox") .. "_Input"
+    container.Size = UDim2.new(1, -8, 0, height)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+
+    local box = Instance.new("TextBox", container)
+    box.Name = "Input"
+    box.Size = UDim2.new(1, 0, 1, 0)
+    box.Position = UDim2.new(0, 0, 0, 0)
+    box.BackgroundColor3 = Win95UI.Theme.InputBg
+    box.Text = text
+    box.PlaceholderText = placeholder
+    box.PlaceholderColor3 = Color3.fromRGB(128, 128, 128)
+    box.TextColor3 = Win95UI.Theme.InputText
+    box.TextSize = 11
+    box.Font = multiline and Win95UI.Theme.CodeFont or Win95UI.Theme.Font
+    box.MultiLine = multiline
+    box.ClearTextOnFocus = clearOnFocus
+    box.TextXAlignment = Enum.TextXAlignment.Left
+    box.TextYAlignment = multiline and Enum.TextYAlignment.Top or Enum.TextYAlignment.Center
+    box.TextWrapped = multiline
+    box.ZIndex = zIndex + 1
+    box.BorderSizePixel = 0
+    self:Add3DBorder(box, true)
+
+    if config.FocusLostCallback then
+        box.FocusLost:Connect(function(enterPressed)
+            local ok, err = pcall(function() config.FocusLostCallback(box.Text, enterPressed) end)
+            if not ok then warn("[Win95UI TextBox Error] " .. tostring(err)) end
+        end)
+    end
+
+    box:GetPropertyChangedSignal("Text"):Connect(function()
+        local ok, err = pcall(function() callback(box.Text) end)
+        if not ok then warn("[Win95UI TextBox Error] " .. tostring(err)) end
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(container, height)
+    end
+
+    local Element = {
+        Frame = container,
+        Type = "TextBox",
+        GetText = function() return box.Text end,
+        SetText = function(self, newText)
+            box.Text = newText
+        end,
+        Focus = function(self)
+            box:CaptureFocus()
+        end
+    }
+
+    return Element
+end
+
+function Win95UI:AddDropdown(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Select"
+    local options = config.Options or {}
+    local default = config.Default or (options[1] or "")
+    local callback = config.Callback or function() end
+    local zIndex = config.ZIndex or 1
+
+    local container = Instance.new("Frame")
+    container.Name = text .. "_Dropdown"
+    container.Size = UDim2.new(1, -8, 0, 48)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+
+    local label = Instance.new("TextLabel", container)
+    label.Name = "Label"
+    label.Size = UDim2.new(1, 0, 0, 14)
+    label.Position = UDim2.new(0, 2, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Win95UI.Theme.ButtonText
+    label.TextSize = 11
+    label.Font = Win95UI.Theme.Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = zIndex + 1
+
+    local display = Instance.new("TextButton", container)
+    display.Name = "Display"
+    display.Size = UDim2.new(1, 0, 0, 24)
+    display.Position = UDim2.new(0, 0, 0, 18)
+    display.BackgroundColor3 = Win95UI.Theme.InputBg
+    display.Text = default
+    display.TextColor3 = Win95UI.Theme.InputText
+    display.TextSize = 11
+    display.Font = Win95UI.Theme.Font
+    display.TextXAlignment = Enum.TextXAlignment.Left
+    display.AutoButtonColor = false
+    display.ZIndex = zIndex + 1
+    display.BorderSizePixel = 0
+    self:Add3DBorder(display, true)
+
+    local arrow = Instance.new("TextLabel", display)
+    arrow.Name = "Arrow"
+    arrow.Size = UDim2.new(0, 20, 1, 0)
+    arrow.Position = UDim2.new(1, -20, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.Text = "v"
+    arrow.TextColor3 = Win95UI.Theme.ButtonText
+    arrow.TextSize = 12
+    arrow.Font = Win95UI.Theme.FontBold
+    arrow.ZIndex = zIndex + 2
+
+    local dropdownFrame = Instance.new("Frame", container)
+    dropdownFrame.Name = "DropdownFrame"
+    dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+    dropdownFrame.Position = UDim2.new(0, 0, 0, 44)
+    dropdownFrame.BackgroundColor3 = Win95UI.Theme.InputBg
+    dropdownFrame.BorderSizePixel = 0
+    dropdownFrame.ZIndex = zIndex + 10
+    dropdownFrame.Visible = false
+    dropdownFrame.ClipsDescendants = true
+    self:Add3DBorder(dropdownFrame, true)
+
+    local scroll = Instance.new("ScrollingFrame", dropdownFrame)
+    scroll.Name = "Scroll"
+    scroll.Size = UDim2.new(1, -4, 1, -4)
+    scroll.Position = UDim2.new(0, 2, 0, 2)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 8
+    scroll.ScrollBarImageColor3 = Win95UI.Theme.ButtonFace
+    scroll.ZIndex = zIndex + 11
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+    local layout = Instance.new("UIListLayout", scroll)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 1)
+
+    local selected = default
+    local open = false
+
+    local function buildOptions()
+        for _, child in ipairs(scroll:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+        for _, opt in ipairs(options) do
+            local optBtn = Instance.new("TextButton", scroll)
+            optBtn.Size = UDim2.new(1, 0, 0, 20)
+            optBtn.BackgroundColor3 = Win95UI.Theme.InputBg
+            optBtn.Text = opt
+            optBtn.TextColor3 = Win95UI.Theme.InputText
+            optBtn.TextSize = 11
+            optBtn.Font = Win95UI.Theme.Font
+            optBtn.AutoButtonColor = false
+            optBtn.ZIndex = zIndex + 12
+            optBtn.BorderSizePixel = 0
+
+            optBtn.MouseEnter:Connect(function()
+                optBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 128)
+                optBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end)
+            optBtn.MouseLeave:Connect(function()
+                optBtn.BackgroundColor3 = Win95UI.Theme.InputBg
+                optBtn.TextColor3 = Win95UI.Theme.InputText
+            end)
+
+            optBtn.MouseButton1Click:Connect(function()
+                selected = opt
+                display.Text = opt
+                open = false
+                dropdownFrame.Visible = false
+                dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+                local ok, err = pcall(function() callback(opt) end)
+                if not ok then warn("[Win95UI Dropdown Error] " .. tostring(err)) end
+            end)
+        end
+        scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y)
+    end
+
+    buildOptions()
+
+    display.MouseButton1Click:Connect(function()
+        open = not open
+        if open then
+            local maxHeight = math.min(#options * 21 + 4, 150)
+            dropdownFrame.Size = UDim2.new(1, 0, 0, maxHeight)
+            dropdownFrame.Visible = true
+        else
+            dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+            dropdownFrame.Visible = false
+        end
+    end)
+
+    UserInputService.InputBegan:Connect(function(input)
+        if open and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local pos = input.Position
+            local absPos = dropdownFrame.AbsolutePosition
+            local absSize = dropdownFrame.AbsoluteSize
+            if pos.X < absPos.X or pos.X > absPos.X + absSize.X or
+               pos.Y < absPos.Y or pos.Y > absPos.Y + absSize.Y then
+                open = false
+                dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+                dropdownFrame.Visible = false
+            end
+        end
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(container, 48)
+    end
+
+    local Element = {
+        Frame = container,
+        Type = "Dropdown",
+        GetSelected = function() return selected end,
+        SetSelected = function(self, opt)
+            if table.find(options, opt) then
+                selected = opt
+                display.Text = opt
+                local ok, err = pcall(function() callback(opt) end)
+                if not ok then warn("[Win95UI Dropdown Error] " .. tostring(err)) end
+            end
+        end,
+        Refresh = function(self, newOptions)
+            options = newOptions
+            buildOptions()
+        end,
+        SetText = function(self, newText)
+            label.Text = newText
+        end
+    }
+
+    return Element
+end
+
+function Win95UI:AddLabel(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Label"
+    local color = config.Color or Win95UI.Theme.ButtonText
+    local font = config.Font or Win95UI.Theme.Font
+    local size = config.Size or UDim2.new(1, -8, 0, 18)
+    local zIndex = config.ZIndex or 1
+
+    local label = Instance.new("TextLabel")
+    label.Name = text .. "_Label"
+    label.Size = size
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = color
+    label.TextSize = 11
+    label.Font = font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.ZIndex = zIndex
+    label.BorderSizePixel = 0
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(label, size.Y.Offset or 18)
+    end
+
+    local Element = {
+        Frame = label,
+        Type = "Label",
+        SetText = function(self, newText)
+            label.Text = newText
+        end,
+        SetColor = function(self, newColor)
+            label.TextColor3 = newColor
+        end
+    }
+
+    return Element
+end
+
+function Win95UI:AddSeparator(windowOrSection, config)
+    config = config or {}
+    local zIndex = config.ZIndex or 1
+
+    local sep = Instance.new("Frame")
+    sep.Name = "Separator"
+    sep.Size = UDim2.new(1, -8, 0, 2)
+    sep.BackgroundColor3 = Win95UI.Theme.ButtonShadow
+    sep.BorderSizePixel = 0
+    sep.ZIndex = zIndex
+
+    local topLine = Instance.new("Frame", sep)
+    topLine.Size = UDim2.new(1, 0, 0, 1)
+    topLine.BackgroundColor3 = Win95UI.Theme.ButtonHighlight
+    topLine.BorderSizePixel = 0
+    topLine.ZIndex = zIndex + 1
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(sep, 4)
+    end
+
+    return { Frame = sep, Type = "Separator" }
+end
+
+function Win95UI:AddLogBox(windowOrSection, config)
+    config = config or {}
+    local size = config.Size or UDim2.new(1, -8, 0, 120)
+    local zIndex = config.ZIndex or 1
+
+    local group = Instance.new("Frame")
+    group.Name = "LogGroup"
+    group.Size = size
+    group.BackgroundColor3 = Win95UI.Theme.GroupBoxBg
+    group.BorderSizePixel = 0
+    group.ZIndex = zIndex
+    self:Add3DBorder(group, true)
+
+    local title = config.Title
+    if title then
+        local titleLabel = Instance.new("TextLabel", group)
+        titleLabel.Size = UDim2.new(0, title:len() * 7 + 10, 0, 14)
+        titleLabel.Position = UDim2.new(0, 6, 0, 2)
+        titleLabel.BackgroundColor3 = Win95UI.Theme.GroupBoxBg
+        titleLabel.Text = " " .. title .. " "
+        titleLabel.TextColor3 = Win95UI.Theme.GroupBoxText
+        titleLabel.TextSize = 10
+        titleLabel.Font = Win95UI.Theme.FontBold
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.ZIndex = zIndex + 1
+    end
+
+    local scroll = Instance.new("ScrollingFrame", group)
+    scroll.Name = "LogScroll"
+    scroll.Size = UDim2.new(1, -8, 1, -20)
+    scroll.Position = UDim2.new(0, 4, 0, 16)
+    scroll.BackgroundColor3 = Win95UI.Theme.LogBg
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 12
+    scroll.ScrollBarImageColor3 = Win95UI.Theme.ButtonFace
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.ZIndex = zIndex + 1
+    self:Add3DBorder(scroll, true)
+
+    local container = Instance.new("Frame", scroll)
+    container.Name = "LogContainer"
+    container.Size = UDim2.new(1, 0, 0, 0)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex + 2
+
+    local layout = Instance.new("UIListLayout", container)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 0)
+
+    local maxEntries = config.MaxEntries or 100
+
+    local function addLog(text, color)
+        color = color or Win95UI.Theme.LogText
+        local entry = Instance.new("TextLabel")
+        entry.Size = UDim2.new(1, -8, 0, 16)
+        entry.BackgroundTransparency = 1
+        entry.Text = "[" .. os.date("%H:%M:%S") .. "] " .. text
+        entry.TextColor3 = color
+        entry.TextSize = 11
+        entry.Font = Win95UI.Theme.Font
+        entry.TextXAlignment = Enum.TextXAlignment.Left
+        entry.TextTruncate = Enum.TextTruncate.AtEnd
+        entry.ZIndex = zIndex + 3
+        entry.Parent = container
+
+        task.defer(function()
+            scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 4)
+            local visibleHeight = scroll.AbsoluteSize.Y
+            local scrollY = math.max(0, layout.AbsoluteContentSize.Y + 4 - visibleHeight)
+            scroll.CanvasPosition = Vector2.new(0, scrollY)
+        end)
+
+        local count = 0
+        for _, child in ipairs(container:GetChildren()) do
+            if child:IsA("TextLabel") then count = count + 1 end
+        end
+        if count > maxEntries then
+            for _, child in ipairs(container:GetChildren()) do
+                if child:IsA("TextLabel") then
+                    child:Destroy()
+                    break
+                end
+            end
+        end
+    end
+
+    local function clearLogs()
+        for _, child in ipairs(container:GetChildren()) do
+            if child:IsA("TextLabel") then child:Destroy() end
+        end
+        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    end
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(group, size.Y.Offset or 120)
+    end
+
+    local Element = {
+        Frame = group,
+        Type = "LogBox",
+        AddLog = addLog,
+        Clear = clearLogs
+    }
+
+    return Element
+end
+
+function Win95UI:AddKeybind(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Keybind"
+    local default = config.Default or Enum.KeyCode.Unknown
+    local callback = config.Callback or function() end
+    local zIndex = config.ZIndex or 1
+
+    local container = Instance.new("Frame")
+    container.Name = text .. "_Keybind"
+    container.Size = UDim2.new(1, -8, 0, 26)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+
+    local label = Instance.new("TextLabel", container)
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -80, 1, 0)
+    label.Position = UDim2.new(0, 2, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Win95UI.Theme.ButtonText
+    label.TextSize = 11
+    label.Font = Win95UI.Theme.Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = zIndex + 1
+
+    local keyBtn = Instance.new("TextButton", container)
+    keyBtn.Name = "KeyBtn"
+    keyBtn.Size = UDim2.new(0, 70, 0, 22)
+    keyBtn.Position = UDim2.new(1, -74, 0.5, -11)
+    keyBtn.BackgroundColor3 = Win95UI.Theme.ButtonFace
+    keyBtn.Text = default ~= Enum.KeyCode.Unknown and default.Name or "None"
+    keyBtn.TextColor3 = Win95UI.Theme.ButtonText
+    keyBtn.TextSize = 10
+    keyBtn.Font = Win95UI.Theme.FontMedium
+    keyBtn.AutoButtonColor = false
+    keyBtn.ZIndex = zIndex + 1
+    keyBtn.BorderSizePixel = 0
+    self:Add3DBorder(keyBtn, false)
+
+    local currentKey = default
+    local listening = false
+
+    keyBtn.MouseButton1Click:Connect(function()
+        listening = true
+        keyBtn.Text = "..."
+    end)
+
+    UserInputService.InputBegan:Connect(function(input)
+        if listening then
+            if input.KeyCode ~= Enum.KeyCode.Unknown then
+                currentKey = input.KeyCode
+                keyBtn.Text = currentKey.Name
+                listening = false
+                local ok, err = pcall(function() callback(currentKey) end)
+                if not ok then warn("[Win95UI Keybind Error] " .. tostring(err)) end
+            end
+        elseif input.KeyCode == currentKey then
+            local ok, err = pcall(function() callback(currentKey) end)
+            if not ok then warn("[Win95UI Keybind Error] " .. tostring(err)) end
+        end
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(container, 26)
+    end
+
+    local Element = {
+        Frame = container,
+        Type = "Keybind",
+        GetKey = function() return currentKey end,
+        SetKey = function(self, key)
+            currentKey = key
+            keyBtn.Text = key ~= Enum.KeyCode.Unknown and key.Name or "None"
+        end,
+        SetText = function(self, newText)
+            label.Text = newText
+        end
+    }
+
+    return Element
+end
+
+function Win95UI:AddColorPicker(windowOrSection, config)
+    config = config or {}
+    local text = config.Text or "Color"
+    local default = config.Default or Color3.fromRGB(255, 255, 255)
+    local callback = config.Callback or function() end
+    local zIndex = config.ZIndex or 1
+
+    local container = Instance.new("Frame")
+    container.Name = text .. "_ColorPicker"
+    container.Size = UDim2.new(1, -8, 0, 26)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = zIndex
+
+    local label = Instance.new("TextLabel", container)
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 2, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Win95UI.Theme.ButtonText
+    label.TextSize = 11
+    label.Font = Win95UI.Theme.Font
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = zIndex + 1
+
+    local preview = Instance.new("TextButton", container)
+    preview.Name = "Preview"
+    preview.Size = UDim2.new(0, 30, 0, 20)
+    preview.Position = UDim2.new(1, -34, 0.5, -10)
+    preview.BackgroundColor3 = default
+    preview.Text = ""
+    preview.AutoButtonColor = false
+    preview.ZIndex = zIndex + 1
+    preview.BorderSizePixel = 0
+    self:Add3DBorder(preview, true)
+
+    local currentColor = default
+
+    preview.MouseButton1Click:Connect(function()
+        local pickerGui = Instance.new("ScreenGui")
+        pickerGui.Name = "ColorPickerDialog"
+        pickerGui.ResetOnSpawn = false
+        pickerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        pcall(function() pickerGui.Parent = game:GetService("CoreGui") end)
+        if not pickerGui.Parent then pickerGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+
+        local bg = Instance.new("Frame", pickerGui)
+        bg.Size = UDim2.new(1, 0, 1, 0)
+        bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        bg.BackgroundTransparency = 0.5
+        bg.BorderSizePixel = 0
+        bg.ZIndex = 200
+
+        local dialog = Instance.new("Frame", bg)
+        dialog.Size = UDim2.new(0, 260, 0, 200)
+        dialog.Position = UDim2.new(0.5, -130, 0.5, -100)
+        dialog.BackgroundColor3 = Win95UI.Theme.WindowBg
+        dialog.BorderSizePixel = 0
+        dialog.ZIndex = 201
+        self:Add3DBorder(dialog, true)
+
+        local titleBar = Instance.new("Frame", dialog)
+        titleBar.Size = UDim2.new(1, -4, 0, 22)
+        titleBar.Position = UDim2.new(0, 2, 0, 2)
+        titleBar.BackgroundColor3 = Win95UI.Theme.TitleBar
+        titleBar.BorderSizePixel = 0
+        titleBar.ZIndex = 202
+
+        local title = Instance.new("TextLabel", titleBar)
+        title.Size = UDim2.new(1, -30, 1, 0)
+        title.Position = UDim2.new(0, 6, 0, 0)
+        title.BackgroundTransparency = 1
+        title.Text = "Color Picker"
+        title.TextColor3 = Win95UI.Theme.TitleText
+        title.TextSize = 11
+        title.Font = Win95UI.Theme.FontBold
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.ZIndex = 203
+
+        local closeBtn = Instance.new("TextButton", titleBar)
+        closeBtn.Size = UDim2.new(0, 18, 0, 16)
+        closeBtn.Position = UDim2.new(1, -22, 0, 3)
+        closeBtn.BackgroundColor3 = Win95UI.Theme.ButtonFace
+        closeBtn.Text = "X"
+        closeBtn.TextColor3 = Win95UI.Theme.ButtonText
+        closeBtn.TextSize = 11
+        closeBtn.Font = Win95UI.Theme.FontBold
+        closeBtn.AutoButtonColor = false
+        closeBtn.ZIndex = 203
+        self:Add3DBorder(closeBtn, false)
+
+        local rSlider = self:AddSlider(nil, {
+            Text = "R", Min = 0, Max = 255, Default = math.floor(default.R * 255),
+            ZIndex = 202
+        })
+        rSlider.Frame.Parent = dialog
+        rSlider.Frame.Size = UDim2.new(1, -16, 0, 40)
+        rSlider.Frame.Position = UDim2.new(0, 8, 0, 30)
+
+        local gSlider = self:AddSlider(nil, {
+            Text = "G", Min = 0, Max = 255, Default = math.floor(default.G * 255),
+            ZIndex = 202
+        })
+        gSlider.Frame.Parent = dialog
+        gSlider.Frame.Size = UDim2.new(1, -16, 0, 40)
+        gSlider.Frame.Position = UDim2.new(0, 8, 0, 72)
+
+        local bSlider = self:AddSlider(nil, {
+            Text = "B", Min = 0, Max = 255, Default = math.floor(default.B * 255),
+            ZIndex = 202
+        })
+        bSlider.Frame.Parent = dialog
+        bSlider.Frame.Size = UDim2.new(1, -16, 0, 40)
+        bSlider.Frame.Position = UDim2.new(0, 8, 0, 114)
+
+        local previewBox = Instance.new("Frame", dialog)
+        previewBox.Size = UDim2.new(0, 60, 0, 24)
+        previewBox.Position = UDim2.new(0.5, -30, 1, -34)
+        previewBox.BackgroundColor3 = default
+        previewBox.BorderSizePixel = 0
+        previewBox.ZIndex = 202
+        self:Add3DBorder(previewBox, true)
+
+        local function updatePreview()
+            local r = rSlider.GetValue()
+            local g = gSlider.GetValue()
+            local b = bSlider.GetValue()
+            local color = Color3.fromRGB(r, g, b)
+            previewBox.BackgroundColor3 = color
+        end
+
+        rSlider.SetCallback = function(self, cb) end
+        gSlider.SetCallback = function(self, cb) end
+        bSlider.SetCallback = function(self, cb) end
+
+        local oldR = rSlider.Frame:FindFirstChild("Track"):FindFirstChild("Knob")
+        local oldG = gSlider.Frame:FindFirstChild("Track"):FindFirstChild("Knob")
+        local oldB = bSlider.Frame:FindFirstChild("Track"):FindFirstChild("Knob")
+
+        local conn = RunService.RenderStepped:Connect(updatePreview)
+
+        local okBtn = self:CreateClassicButton({
+            Text = "OK",
+            Size = UDim2.new(0, 60, 0, 22),
+            Position = UDim2.new(0.5, -70, 1, -34),
+            Accent = true,
+            ZIndex = 202,
+            Parent = dialog
+        })
+
+        local cancelBtn = self:CreateClassicButton({
+            Text = "Cancel",
+            Size = UDim2.new(0, 60, 0, 22),
+            Position = UDim2.new(0.5, 10, 1, -34),
+            ZIndex = 202,
+            Parent = dialog
+        })
+
+        okBtn.MouseButton1Click:Connect(function()
+            currentColor = previewBox.BackgroundColor3
+            preview.BackgroundColor3 = currentColor
+            conn:Disconnect()
+            pickerGui:Destroy()
+            local ok, err = pcall(function() callback(currentColor) end)
+            if not ok then warn("[Win95UI ColorPicker Error] " .. tostring(err)) end
+        end)
+
+        cancelBtn.MouseButton1Click:Connect(function()
+            conn:Disconnect()
+            pickerGui:Destroy()
+        end)
+
+        closeBtn.MouseButton1Click:Connect(function()
+            conn:Disconnect()
+            pickerGui:Destroy()
+        end)
+    end)
+
+    if windowOrSection and windowOrSection.AddElement then
+        windowOrSection:AddElement(container, 26)
+    end
+
+    local Element = {
+        Frame = container,
+        Type = "ColorPicker",
+        GetColor = function() return currentColor end,
+        SetColor = function(self, color)
+            currentColor = color
+            preview.BackgroundColor3 = color
+            local ok, err = pcall(function() callback(color) end)
+            if not ok then warn("[Win95UI ColorPicker Error] " .. tostring(err)) end
+        end,
+        SetText = function(self, newText)
+            label.Text = newText
+        end
+    }
+
+    return Element
+end
+
+return Win95UI
